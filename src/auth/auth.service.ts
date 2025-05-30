@@ -6,18 +6,22 @@ import {
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { ConfigService } from '@nestjs/config';
+import { AuthRequestDto } from './dto/auth-request.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly jwtExpiresIn: number;
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.jwtExpiresIn = +configService.getOrThrow<number>('JWT_EXPIRATION');
+  }
 
-  async login(
-    email: string,
-    password: string,
-  ): Promise<{ access_token: string }> {
+  async login({ email, password }: AuthRequestDto): Promise<AuthResponseDto> {
     const user = await this.usersService.findOneBy({ email });
 
     if (!user) throw new NotFoundException('User not found');
@@ -32,7 +36,8 @@ export class AuthService {
     };
 
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      accessToken: this.jwtService.sign(payload),
+      expiresIn: this.jwtExpiresIn,
     };
   }
 }

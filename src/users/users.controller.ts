@@ -14,8 +14,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto, CreateUserSchema } from './dto/create-user.dto';
 import { UpdateUserDto, updateUserSchema } from './dto/update-user.dto';
 import { ZodValidationPipe } from 'src/pipes/zod.pipe';
-import { User } from './entities/user.entity';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { User } from '../database/entities/user.entity';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -27,12 +27,13 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Get('profile')
   getUser(@Req() req: Request & { user: User }) {
     return req.user;
   }
 
+  //@UseGuards(AuthGuard)
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(updateUserSchema))
   update(@Body() updateUserDto: UpdateUserDto) {
